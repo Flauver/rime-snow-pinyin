@@ -22,6 +22,7 @@ engine:
     - recognizer
     - key_binder
     - lua_processor@*snow.select_character
+    - lua_processor@*snow.fixed_user*processor
     - lua_processor@*snow.popping
     - lua_processor@*snow.editor
     - speller
@@ -51,6 +52,7 @@ engine:
     - lua_filter@*snow.qingyun
     - uniquifier
     - simplifier
+    - lua_filter@*snow.fixed_user*filter
 
 qingyun_algebra:
   # 还原
@@ -129,6 +131,13 @@ qingyun:
   initial_quality: 10
   enable_user_dict: false
   enable_sentence: false
+
+fixed_user:
+  trigger_key: "Control+r"
+  select_keys: "qwertyuiop"
+  up_key: "Control+i"
+  down_key: "Control+u"
+  delete_key: "Control+o"
 
 __patch:
   - patch
