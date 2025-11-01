@@ -29,7 +29,7 @@ bue	醭
 bui	晡
 buo	变
 buu	表
-c	从
+c	来
 ca	才
 caa	？
 cae	藏
@@ -48,8 +48,8 @@ cie	词
 cii	呲
 cio	窜
 ciu	此
-co	错
-coa	挫
+co	从
+coa	错
 coe	葱
 coi	搓
 coo	C c
@@ -247,7 +247,11 @@ kui	亏
 kuo	困
 kuu	苦
 l	了
+<<<<<<< HEAD
 la	来
+=======
+la	啦
+>>>>>>> 6ac8f7c (改辅助码触发键为.；调整一简；增加 fixed_user.lua)
 laa	率
 lae	浪
 lai	拉
@@ -339,7 +343,7 @@ nue	娘
 nui	？
 nuo	念
 nuu	鸟
-p	跑
+p	都
 pa	拍
 paa	怕
 pae	胖
