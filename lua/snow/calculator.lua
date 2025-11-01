@@ -45,7 +45,7 @@ sqrt = math.sqrt
 exp = math.exp
 e = exp(1)
 ln = math.log
-log = function(x, base)
+lg = function(x, base)
   base = base or 10
   return ln(x) / ln(base)
 end

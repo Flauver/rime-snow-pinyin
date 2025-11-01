@@ -86,7 +86,7 @@ function processor.func(key, env)
       if not rime_api.regex_match(keyName, rule.accept) then
         goto continue
       end
-      shape_input = shape_input .. keyName
+      shape_input = shape_input .. utf8.char(key.keycode)
       goto update
       ::continue::
     end
