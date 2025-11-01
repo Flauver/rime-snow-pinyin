@@ -122,7 +122,7 @@ speller:
       accept: "[bpmfdtnlgkhjqxzcsrywv]"
     # 单字有辅助码
     - when: popping
-      match: "([bpmfdtnlgkhjqxzcsrywv][aeuio]{0,4})([aeiou]+|1[bpmfdtnlgkhjqxzcsrywv][aeiou]+)"
+      match: '([bpmfdtnlgkhjqxzcsrywv][aeuio]{0,4})([aeiou]+|\.[bpmfdtnlgkhjqxzcsrywv][aeiou]+)'
       accept: "[bpmfdtnlgkhjqxzcsrywv]"
     # 四字词和多字词
     - when: popping
