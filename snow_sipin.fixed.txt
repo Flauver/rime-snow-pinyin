@@ -29,7 +29,7 @@ bue	醭
 bui	晡
 buo	变
 buu	表
-c	从
+c	来
 ca	才
 caa	？
 cae	藏
@@ -48,8 +48,8 @@ cie	词
 cii	呲
 cio	窜
 ciu	此
-co	错
-coa	挫
+co	从
+coa	错
 coe	葱
 coi	搓
 coo	C c
@@ -60,7 +60,7 @@ cue	殂
 cui	催
 cuo	寸
 cuu	？
-d	都
+d	的
 da	到
 daa	大
 dae	当
@@ -79,10 +79,10 @@ die	顶
 dii	低
 dio	段
 diu	底
-do	多
+do	都
 doa	剁
 doe	懂
-doi	哆
+doi	多
 doo	D d
 dou	丢
 du	对
@@ -246,7 +246,7 @@ kue	？
 kui	亏
 kuo	困
 kuu	苦
-l	来
+l	了
 la	啦
 laa	率
 lae	浪
@@ -339,7 +339,7 @@ nue	娘
 nui	？
 nuo	念
 nuu	鸟
-p	跑
+p	都
 pa	拍
 paa	怕
 pae	胖
