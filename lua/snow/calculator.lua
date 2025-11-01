@@ -65,6 +65,10 @@ sqrt = math.sqrt
 exp = math.exp
 e = exp(1)
 ln = math.log
+lg = function(x, base)
+  base = base or 10
+  return ln(x) / ln(base)
+end
 
 min = function(arr)
   local m = inf
