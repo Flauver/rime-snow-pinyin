@@ -79,10 +79,10 @@ die	顶
 dii	低
 dio	段
 diu	底
-do	都
+do	多
 doa	剁
 doe	懂
-doi	多
+doi	哆
 doo	D d
 dou	丢
 du	对
