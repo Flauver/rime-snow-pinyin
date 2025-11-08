@@ -40,8 +40,8 @@ end
 ---@class FixedUserEnv: Env
 ---@field fixed_user_memory Memory
 ---@field block_user_memory Memory
----@field get_native_candidate_set fun(): table<string, boolean>
----@field set_native_candidate_set fun(new_set: table<string, boolean>)
+---@field get_append_candidates_set fun(): table<string, boolean>
+---@field set_append_candidates_set fun(new_set: table<string, boolean>)
 ---@field record Record
 ---@field page_size integer
 ---@field select_keys table<string, integer>
@@ -153,6 +153,17 @@ end
 
 ---@param memory Memory
 ---@param code string
+---@return boolean
+local function hasBlock(memory, code)
+  memory:user_lookup(code, false)
+  for v in memory:iter_user() do
+    return true
+  end
+  return false
+end
+
+---@param memory Memory
+---@param code string
 ---@param cands Candidate[]
 ---@return Candidate[]
 local function BlockCandidates(memory, code, cands)
@@ -184,21 +195,22 @@ local function BlockUserMemoryReset(memory, code)
   end
 end
 
---- 原生候选池
+--- 候选池
+--- 存储不在原来的候选里的，只有在 fixed_user_memory 里的词
 ---@type table<string, table<string, boolean>>
-NativeCandidateSetPool = NativeCandidateSetPool or {}
+AppendCandidateSetPool = AppendCandidateSetPool or {}
 
 ---@param schema_name string
 ---@return table<string, boolean>
-local function getNativeCandidateSet(schema_name)
-  NativeCandidateSetPool[schema_name] = NativeCandidateSetPool[schema_name] or {}
-  return NativeCandidateSetPool[schema_name]
+local function getAppendCandidatesSet(schema_name)
+  AppendCandidateSetPool[schema_name] = AppendCandidateSetPool[schema_name] or {}
+  return AppendCandidateSetPool[schema_name]
 end
 
 ---@param schema_name string
 ---@param new_set table<string, boolean>
-local function setNativeCandidateSet(schema_name, new_set)
-  NativeCandidateSetPool[schema_name] = new_set
+local function setAppendCandidatesSet(schema_name, new_set)
+  AppendCandidateSetPool[schema_name] = new_set
 end
 
 ---@param cand Candidate
@@ -301,11 +313,11 @@ end
 ---@param env FixedUserEnv
 function fixed_user_processor.init(env)
   connectMemory(env)
-  env.get_native_candidate_set = function ()
-    return getNativeCandidateSet(env.engine.schema.schema_id)
+  env.get_append_candidates_set = function ()
+    return getAppendCandidatesSet(env.engine.schema.schema_id)
   end
-  env.set_native_candidate_set = function (new_set)
-    setNativeCandidateSet(env.engine.schema.schema_id, new_set)
+  env.set_append_candidates_set = function (new_set)
+    setAppendCandidatesSet(env.engine.schema.schema_id, new_set)
   end
   local context = env.engine.context
   env.record = {
@@ -350,7 +362,7 @@ function fixed_user_processor.init(env)
   ---@type string?
   local select_keys = nil
   if fixed_user_config then
-    local effect_limit = fixed_user_config:get_value("fixed_user/effect_limit")
+    local effect_limit = fixed_user_config:get_value("effect_limit")
     if effect_limit then
       env.effect_limit = effect_limit:get_int() or 16
     else
@@ -553,7 +565,7 @@ function fixed_user_processor.func(key_event, env)
     env.record.cands = new_cands
     env.record.isFixed = new_fixed
     FixedUserMemoryUpdate(env.fixed_user_memory, env.record)
-    if env.get_native_candidate_set()[word] then
+    if not env.get_append_candidates_set()[word] then
       -- 只有原生候选才加入屏蔽列表，就是只存在于 fixed_user_memory 的候选直接在 fixed_user_memory 删了就行
       BlockUserMemoryUpdate(env.block_user_memory, word, env.record.code)
     end
@@ -622,12 +634,15 @@ local function finalize(fixed_phrases, unknown_candidates, i, j, unscreened_cand
   -- 输出设为固顶但是没在候选中找到的候选
   -- 把输出设为固顶的候选但没在候选中找到的候选，加入待筛选的候选列表中
   -- 因为不知道全码是什么，所以只能做一个 SimpleCandidate
+  local append_cands = {}
   while fixed_phrases[i] do
     local simple_candidate = Candidate("fixed_user", segment.start, segment._end, fixed_phrases[i], "")
     fixed_tips(simple_candidate, "📍", env)
     i = i + 1
     table.insert(unscreened_candidates, simple_candidate)
+    append_cands[fixed_phrases[i]] = true
   end
+  env.set_append_candidates_set(append_cands)
   -- 输出没有固顶的候选
   -- 把没有固顶的候选，加入待筛选的候选列表中
   for _j, unknown_candidate in ipairs(unknown_candidates) do
@@ -661,22 +676,34 @@ function fixed_user_filter.func(translation, env)
     return
   end
   local fixed_phrases = index0ToArray(FixedUserMemoryQuery(env.fixed_user_memory, input))
-  ---@type table<string, boolean>
-  local native_cand_set = {}
   if #fixed_phrases == 0 then
-    ---@type Candidate[]
-    local output = {}
-    for candidate in translation:iter() do
-      native_cand_set[candidate.text] = true
-      table.insert(output, candidate)
-    end
-    env.set_native_candidate_set(native_cand_set)
-    for _, candidate in ipairs(BlockCandidates(env.block_user_memory, input, output)) do
-      yield(candidate)
+    if hasBlock(env.block_user_memory, input) then
+      ---@type Candidate[]
+      local effect = {}
+      ---@type Candidate[]
+      local excess = {}
+      local i = 0
+      for candidate in translation:iter() do
+        i = i + 1
+        if i - 1 < env.effect_limit then
+          table.insert(effect, candidate)
+        else
+          table.insert(excess, candidate)
+        end
+      end
+      for _, candidate in ipairs(BlockCandidates(env.block_user_memory, input, effect)) do
+        yield(candidate)
+      end
+      for _, candidate in ipairs(excess) do
+        yield(candidate)
+      end
+    else
+      for candidate in translation:iter() do
+        yield(candidate)
+      end
     end
     return
   end
-  ---@type table<string, integer>
   local cand_reverse = {}
   for k, v in ipairs(fixed_phrases) do
     cand_reverse[v] = k
@@ -739,7 +766,6 @@ function fixed_user_filter.func(translation, env)
   for _, _candidate in ipairs(effect_candidates) do
     local candidate = _candidate.c
     total_candidates = total_candidates + 1
-    native_cand_set[candidate.text] = true
 --    if total_candidates == max_candidates then
 --      finalize(fixed_phrases, unknown_candidates, i, j, segment, env)
 --      finalized = true
@@ -784,7 +810,6 @@ function fixed_user_filter.func(translation, env)
     end
     ::continue::
   end
-  env.set_native_candidate_set(native_cand_set)
   if not finalized then
     finalize(fixed_phrases, unknown_candidates, i, j, unscreened_cands, segment, env)
   end
