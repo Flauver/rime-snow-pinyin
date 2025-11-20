@@ -248,6 +248,25 @@ end
 ---@type fun(word: string, code: string, env: FixedUserEnv)
 local addWord
 
+---@class Memorys
+---@field fixed_memory Memory
+---@field block_memory Memory
+
+---@type table<string, Memorys>
+MemorysPool = MemorysPool or {}
+
+---@param env FixedUserEnv
+---@param fixed_schema Schema
+---@param block_schema Schema
+---@param name string
+local function getMemory(env, fixed_schema, block_schema, name)
+    MemorysPool[name] = MemorysPool[name] or {
+        fixed_memory = Memory(env.engine, fixed_schema),
+        block_memory = Memory(env.engine, block_schema)
+    }
+    return MemorysPool[name]
+end
+
 ---@param env FixedUserEnv
 local function connectMemory(env)
     local path = rime_api:get_user_data_dir()
@@ -278,9 +297,8 @@ local function connectMemory(env)
     else
         fixed_build_prism:close()
     end
-    local schema = Schema(name .. "_fixed_user")
-    schema.config:set_string("translator/dictionary", name .. "_fixed_user")
-    env.fixed_user_memory = Memory(env.engine, schema)
+    local fixed_schema = Schema(name .. "_fixed_user")
+    fixed_schema.config:set_string("translator/dictionary", name .. "_fixed_user")
     local block_build_table = io.open(path .. "/build/" .. name .. "_block_user.table.bin", "rb")
     if not block_build_table then
         local template_table = io.open(path .. "/build_template/abc.table.bin", "rb")
@@ -305,9 +323,11 @@ local function connectMemory(env)
     else
         block_build_prism:close()
     end
-    local schema = Schema(name .. "_block_user")
-    schema.config:set_string("translator/dictionary", name .. "_block_user")
-    env.block_user_memory = Memory(env.engine, schema)
+    local block_schema = Schema(name .. "_block_user")
+    block_schema.config:set_string("translator/dictionary", name .. "_block_user")
+    local memorys = getMemory(env, fixed_schema, block_schema, name)
+    env.fixed_user_memory = memorys.fixed_memory
+    env.block_user_memory = memorys.block_memory
 end
 
 ---@param env FixedUserEnv
@@ -619,8 +639,16 @@ end
 
 ---@param env FixedUserEnv
 function fixed_user_processor.fini(env)
-    env.fixed_user_memory = nil
-    env.block_user_memory = nil
+    if env.fixed_user_memory.disconnect then
+        env.fixed_user_memory:disconnect()
+    else
+        env.fixed_user_memory = nil
+    end
+    if env.block_user_memory.disconnect then
+        env.block_user_memory:disconnect()
+    else
+        env.block_user_memory = nil
+    end
 end
 
 ---@param fixed_phrases string[]
@@ -657,7 +685,14 @@ end
 local fixed_user_filter = {}
 
 function fixed_user_filter.init(env)
-    fixed_user_processor.init(env)
+    local t = {}
+    for k, v in pairs(env) do
+        t[k] = v
+    end
+    fixed_user_processor.init(t)
+    for k, v in pairs(t) do
+        env[k] = v
+    end
 end
 
 ---@class CandInt
