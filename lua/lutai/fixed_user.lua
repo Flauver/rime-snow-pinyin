@@ -685,14 +685,7 @@ end
 local fixed_user_filter = {}
 
 function fixed_user_filter.init(env)
-    local t = {}
-    for k, v in pairs(env) do
-        t[k] = v
-    end
-    fixed_user_processor.init(t)
-    for k, v in pairs(t) do
-        env[k] = v
-    end
+    fixed_user_processor.init(env)
 end
 
 ---@class CandInt
@@ -715,8 +708,6 @@ function fixed_user_filter.func(translation, env)
         if hasBlock(env.block_user_memory, input) then
             ---@type Candidate[]
             local effect = {}
-            ---@type Candidate[]
-            local excess = {}
             local i = 0
             for candidate in translation:iter() do
                 i = i + 1
@@ -730,6 +721,11 @@ function fixed_user_filter.func(translation, env)
                     end
                 end
                 if i - 1 >= env.effect_limit then
+                    yield(candidate)
+                end
+            end
+            if i - 1 < env.effect_limit then
+                for _, candidate in ipairs(BlockCandidates(env.block_user_memory, input, effect)) do
                     yield(candidate)
                 end
             end
@@ -757,9 +753,8 @@ function fixed_user_filter.func(translation, env)
     local finalized = false
     ---@type CandInt[]
     local effect_candidates = {}
-    ---@type Candidate[]
-    local excess_candidates = {}
     local _i = 0
+    local main = nil
     for _c in translation:iter() do
         _i = _i + 1
         ---@type CandInt
@@ -767,97 +762,102 @@ function fixed_user_filter.func(translation, env)
             c = _c,
             i = _i
         }
+        if not main then
+            main = function ()
+                -- 这里是主逻辑，为什么写在循环里呢，因为把超出范围的候选存表太慢了，直接 yield 就快
+                -- 排序，避免明明有这个候选，却找不到
+                table.sort(effect_candidates, function (a, b)
+                    local v_a = cand_reverse[a.c.text] or 1024
+                    local v_b = cand_reverse[b.c.text] or 1024
+                    if v_a == v_b then
+                        -- lua 的排序是不稳定的
+                        return a.i < b.i
+                    end
+                    return v_a < v_b
+                end)
+                -- 提前找到未知的候选，用来填充 ∅
+                for _, _candidate in ipairs(effect_candidates) do
+                    local candidate = _candidate.c
+                    local is_fixed = false
+                    for _, phrase in ipairs(fixed_phrases) do
+                        if candidate.text == phrase then
+                            is_fixed = true
+                            break
+                        end
+                    end
+                    if not is_fixed then
+                        table.insert(unknown_candidates, candidate)
+                    end
+                end
+                ---@type Candidate[]
+                local unscreened_cands = {}
+                for _, _candidate in ipairs(effect_candidates) do
+                    local candidate = _candidate.c
+                    total_candidates = total_candidates + 1
+    --                if total_candidates == max_candidates then
+    --                    finalize(fixed_phrases, unknown_candidates, i, j, segment, env)
+    --                    finalized = true
+    --                    yield(candidate)
+    --                    goto continue
+    --                elseif total_candidates > max_candidates then
+    --                    yield(candidate)
+    --                    goto continue
+    --                end
+                    local text = candidate.text
+                    ---@type Candidate[]
+                    --local is_fixed = false
+                    -- 对于一个新的候选，要么加入已知候选，要么加入未知候选
+                    -- 上面的是原注释，因为已经添加了未知候选了，所以这里就不用加入了
+                    for _, phrase in ipairs(fixed_phrases) do
+                        if text == phrase then
+                            known_candidates[phrase] = candidate
+                            --is_fixed = true
+                            break
+                        end
+                    end
+    --                if not is_fixed then
+    --                    table.insert(unknown_candidates, candidate)
+    --                end
+                    -- 每看过一个新的候选之后，看看是否找到了新的固顶候选，如果找到了，就输出
+                    -- 每看过一个新的候选之后，看看是否找到了新的固顶候选，如果找到了，就加入未筛选候选
+                    local current = fixed_phrases[i]
+                    if current and known_candidates[current] then
+                        local cand = known_candidates[current]
+                        cand.type = "fixed_user"
+                        fixed_tips(cand, "📌", env)
+                        table.insert(unscreened_cands, cand)
+                        i = i + 1
+                    end
+                    if current == "∅" then
+                        local cand = unknown_candidates[j]
+                        if cand then
+                            table.insert(unscreened_cands, cand)
+                            i = i + 1
+                            j = j + 1
+                        end
+                    end
+                    ::continue::
+                end
+                if not finalized then
+                    finalize(fixed_phrases, unknown_candidates, i, j, unscreened_cands, segment, env)
+                end
+                for _, candidates in ipairs(BlockCandidates(env.block_user_memory, input, unscreened_cands)) do
+                    yield(candidates)
+                end  
+            end
+        end
         if _i - 1 < env.effect_limit then
             table.insert(effect_candidates, e)
         end
         if _i - 1 == env.effect_limit then
-            -- 这里是主逻辑，为什么写在循环里呢，因为把超出范围的候选存表太慢了，直接 yield 就快
-            -- 排序，避免明明有这个候选，却找不到
-            table.sort(effect_candidates, function (a, b)
-                local v_a = cand_reverse[a.c.text] or 1024
-                local v_b = cand_reverse[b.c.text] or 1024
-                if v_a == v_b then
-                    -- lua 的排序是不稳定的
-                    return a.i < b.i
-                end
-                return v_a < v_b
-            end)
-            -- 提前找到未知的候选，用来填充 ∅
-            for _, _candidate in ipairs(effect_candidates) do
-                local candidate = _candidate.c
-                local is_fixed = false
-                for _, phrase in ipairs(fixed_phrases) do
-                    if candidate.text == phrase then
-                        is_fixed = true
-                        break
-                    end
-                end
-                if not is_fixed then
-                    table.insert(unknown_candidates, candidate)
-                end
-            end
-            ---@type Candidate[]
-            local unscreened_cands = {}
-            for _, _candidate in ipairs(effect_candidates) do
-                local candidate = _candidate.c
-                total_candidates = total_candidates + 1
---                if total_candidates == max_candidates then
---                    finalize(fixed_phrases, unknown_candidates, i, j, segment, env)
---                    finalized = true
---                    yield(candidate)
---                    goto continue
---                elseif total_candidates > max_candidates then
---                    yield(candidate)
---                    goto continue
---                end
-                local text = candidate.text
-                ---@type Candidate[]
-                --local is_fixed = false
-                -- 对于一个新的候选，要么加入已知候选，要么加入未知候选
-                -- 上面的是原注释，因为已经添加了未知候选了，所以这里就不用加入了
-                for _, phrase in ipairs(fixed_phrases) do
-                    if text == phrase then
-                        known_candidates[phrase] = candidate
-                        --is_fixed = true
-                        break
-                    end
-                end
---                if not is_fixed then
---                    table.insert(unknown_candidates, candidate)
---                end
-                -- 每看过一个新的候选之后，看看是否找到了新的固顶候选，如果找到了，就输出
-                -- 每看过一个新的候选之后，看看是否找到了新的固顶候选，如果找到了，就加入未筛选候选
-                local current = fixed_phrases[i]
-                if current and known_candidates[current] then
-                    local cand = known_candidates[current]
-                    cand.type = "fixed_user"
-                    fixed_tips(cand, "📌", env)
-                    table.insert(unscreened_cands, cand)
-                    i = i + 1
-                end
-                if current == "∅" then
-                    local cand = unknown_candidates[j]
-                    if cand then
-                        table.insert(unscreened_cands, cand)
-                        i = i + 1
-                        j = j + 1
-                    end
-                end
-                ::continue::
-            end
-            if not finalized then
-                finalize(fixed_phrases, unknown_candidates, i, j, unscreened_cands, segment, env)
-            end
-            for _, candidates in ipairs(BlockCandidates(env.block_user_memory, input, unscreened_cands)) do
-                yield(candidates)
-            end
-            for _, candidate in ipairs(excess_candidates) do
-                yield(candidate)
-            end
+            main()
         end
         if _i - 1 >= env.effect_limit then
             yield(_c)
         end
+    end
+    if _i - 1 < env.effect_limit then
+        main()
     end
 end
 
