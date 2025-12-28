@@ -16,8 +16,8 @@ schema:
 
 switches:
   - name: ascii_mode
-    reset: 0
     states: [ 中文, 西文 ]
+    reset: 0
   - name: full_shape
     states: [ 半角, 全角 ]
   - name: traditionalization
@@ -71,6 +71,15 @@ translator:
     - snow_pinyin.user
 
 jianpin:
+  dictionary: snow_pinyin
+  prism: snow_jiandao_jianpin
+  packs:
+    - snow_pinyin.base
+    - snow_pinyin.ext
+    - snow_pinyin.tencent
+    - snow_pinyin.user
+
+jianpin2:
   dictionary: snow_pinyin
   prism: snow_jiandao_jianpin
   packs:
