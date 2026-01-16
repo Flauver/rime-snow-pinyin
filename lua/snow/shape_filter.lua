@@ -108,7 +108,7 @@ function filter.handle_candidate(text, shape_input, env)
       ---@type string?
       local prompt = ""
       local comment = ""
-      if shape_input:sub(1, 1) == "." then
+      if shape_input:sub(1, 1) == "1" then
         partial_code = shape_input:sub(2)
         local element = env.shape_elements:lookup(text) or ""
         code = encode(element, env.shape_mapping)

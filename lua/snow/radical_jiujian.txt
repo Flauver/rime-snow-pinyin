@@ -92,7 +92,11 @@
 甘	awdw
 生	zaedaw
 田	xawde
+<<<<<<< HEAD
 疋	cwa
+=======
+疋	zaa
+>>>>>>> d0ce9e3 (增加冰雪九键)
 疒	des
 癶	wdw
 白	wwae
