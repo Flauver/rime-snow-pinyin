@@ -6,7 +6,7 @@ __include: snow_pinyin.schema.yaml:/
 schema:
   schema_id: snow_jiujian
   name: 冰雪九键
-  version: "0.2.0"
+  version: "0.3.0"
   author:
     - 谭淞宸 <i@tansongchen.com>
     - 深白
@@ -14,7 +14,8 @@ schema:
     带调拼音词顶功输入方案
   dependencies:
     - snow_pinyin
-    - snow_stroke
+    - snow_bihua
+    - snow_bushou
 
 engine:
   processors:
@@ -107,6 +108,8 @@ patch:
   translator/preedit_format:
     - xlit/qweasdzxc/123456789/
   translator/enable_schema_user_dict: true
+  translator/shape_elements: snow_bushou
+  translator/shape_mapping: "radical_jiujian.txt"
   pinyin/prefix: "p"
   recognizer/patterns/pinyin: null
   punctuator/half_shape/+:

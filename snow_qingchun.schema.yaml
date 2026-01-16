@@ -4,14 +4,15 @@
 schema:
   schema_id: snow_qingchun
   name: 冰雪清纯
-  version: "0.3.0"
+  version: "0.3"
   author:
     - 谭淞宸 <i@tansongchen.com>
   description: |
     冰雪清韵纯净版，采用固定码表输入
   dependencies:
     - snow_pinyin
-    - snow_stroke
+    - snow_bihua
+    - snow_qingyun_chaifen
 
 switches:
   - name: chaifen
@@ -102,7 +103,7 @@ recognizer:
 stroke:
   tag: pinyin
   dictionary: stroke
-  prism: snow_stroke
+  prism: snow_bihua
   enable_user_dict: false
   enable_sentence: false
   enable_completion: true

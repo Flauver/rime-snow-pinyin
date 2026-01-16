@@ -6,15 +6,16 @@ __include: snow_pinyin.schema.yaml:/
 schema:
   schema_id: snow_qingyun
   name: 冰雪清韵
-  version: "0.3.0"
+  version: "0.3"
   author:
     - 谭淞宸 <i@tansongchen.com>
   description: |
     以音码词语和形码单字为特色的前缀码输入方案
   dependencies:
     - snow_pinyin
-    - snow_stroke
+    - snow_bihua
     - snow_qingyun_xingma
+    - snow_qingyun_chaifen
 
 switches:
   - name: popping
