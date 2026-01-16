@@ -1,0 +1,127 @@
+# Rime schema
+# encoding: utf-8
+
+__include: snow_pinyin.schema.yaml:/
+
+schema:
+  schema_id: snow_jiujian
+  name: 冰雪九键
+  version: "0.2.0"
+  author:
+    - 谭淞宸 <i@tansongchen.com>
+    - 深白
+  description: |
+    带调拼音词顶功输入方案
+  dependencies:
+    - snow_pinyin
+    - snow_stroke
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - lua_processor@*snow.user_dict
+    - lua_processor@*snow.shape_processor
+    - key_binder
+    - lua_processor@*snow.abbreviation
+    - lua_processor@*snow.select_character
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - affix_segmentor@stroke
+    - affix_segmentor@pinyin
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - table_translator@stroke
+    - script_translator@pinyin
+    - lua_translator@*snow.datetime
+    - lua_translator@*snow.number
+    - lua_translator@*snow.calculator
+    - history_translator
+  filters:
+    - reverse_lookup_filter@lookup_pinyin
+    - reverse_lookup_filter@lookup_jiujian
+    #- lua_filter@*snow.fix
+    #- lua_filter@*snow.postpone
+    - uniquifier
+    - lua_filter@*snow.shape_filter
+    - simplifier
+    - lua_filter@*snow.special
+
+jiujian_algebra:
+  - xform/[abc]/W/
+  - xform/[def]/E/
+  - xform/[hgi]/A/
+  - xform/[jkl]/S/
+  - xform/[omn]/D/
+  - xform/[pqrs]/Z/
+  - xform/[tuv]/X/
+  - xform/[wxyz]/C/
+  - xlit/12345/weasd/
+  - xlit/WEASDZXC/weasdzxc/
+
+speller:
+  alphabet: weasdzxc
+  delimiter: " "
+  shape:
+    - match: ".*"
+      accept: "q"
+    - match_shape: "q.*"
+      accept: "[weasdzxc]"
+  algebra:
+    __include: /jiujian_algebra
+    __append:
+      # 简拼及无声调的全拼
+      - abbrev/^([weasdzxc]).+$/$1/
+      - derive/[weasd]$//
+
+lookup_jiujian:
+  tags: [pinyin]
+  overwrite_comment: true
+  dictionary: snow_pinyin
+  comment_format:
+    __include: /jiujian_algebra
+
+__patch:
+  - patch
+  - snow_jiujian.custom:/patch?
+
+patch:
+  switches/+:
+    - name: popping
+      states: [整句, 顶功]
+      reset: 1
+    - name: buffered
+      states: [结束, 缓冲]
+      reset: 0
+  translator/prism: snow_jiujian
+  translator/preedit_format:
+    - xlit/qweasdzxc/123456789/
+  translator/enable_schema_user_dict: true
+  pinyin/prefix: "p"
+  recognizer/patterns/pinyin: null
+  punctuator/half_shape/+:
+    ";": 的
+    "|": ；
+    "/": 了
+    "\\": 、
+  key_binder/bindings/+:
+    # 定位
+    - { when: has_menu, accept: 1, send_sequence: "{Shift+Right}" }
+    - { when: has_menu, accept: 4, send_sequence: "{Shift+Right}{Shift+Right}" }
+    - { when: has_menu, accept: 5, send_sequence: "{Shift+Right}{Shift+Right}{Shift+Right}" }
+    - { when: has_menu, accept: 6, send_sequence: "{Shift+Right}{Shift+Right}{Shift+Right}{Shift+Right}" }
+    - { when: has_menu, accept: 7, send_sequence: "{End}" }
+    - { when: always, accept: "Control+j", toggle: buffered }
+    #- { when: always, accept: e, toggle: buffered }
+    - { when: composing, accept: e, send: e }
+  menu/alternative_select_keys: "_23890"

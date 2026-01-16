@@ -9,6 +9,7 @@ local snow = require "snow.snow"
 ---@field radicals_xingpang table<string, string>
 ---@field radical_sipin table<string, string>
 ---@field radical_shengjie table<string, string>
+---@field radical_jiujian table<string, string>
 ---@field xkjd table<string, string>
 ---@field xkjd_chaifen table<string, string>
 
@@ -54,6 +55,26 @@ local function jiandao_encode(text, current, map)
   return result
 end
 
+---@param element string
+---@param map table<string, string>
+---@param result string[]
+local function jiujian_encode(element, map, result)
+  local char_code = char_code
+  local word_code = ""
+  for i, c in utf8.codes(element) do
+    local character = utf8.char(c)
+    local value = map[character] or ""
+    if value then
+      if i == 1 then
+        char_code = value
+      end
+      word_code = word_code .. value:sub(1, 2)
+    end
+  end
+  result[0] = char_code
+  result[1] = word_code
+end
+
 local filter = {}
 
 ---@param env AssistEnv
@@ -65,6 +86,7 @@ function filter.init(env)
   env.radical_sipin = snow.table_from_tsv(dir .. "radical_sipin.txt")
   env.radical_shengjie = snow.table_from_tsv(dir .. "radical_shengjie.txt")
   env.xkjd = snow.table_from_tsv(dir .. "xkjd.txt")
+  env.radical_jiujian = snow.table_from_tsv(dir .. "radical_jiujian.txt")
   env.xkjd_chaifen = snow.table_from_tsv(dir .. "xkjd_chaifen.txt")
 end
 
@@ -83,7 +105,7 @@ function filter.handle_candidate(text, shape_input, env)
       ---@type string?
       local prompt = ""
       local comment = ""
-      if shape_input:sub(1, 1) == "." then
+      if shape_input:sub(1, 1) == "1" then
         partial_code = shape_input:sub(2)
         local element = env.radicals_gf0012[text] or ""
         code = encode(element, env.radical_sipin)
@@ -157,6 +179,23 @@ function filter.handle_candidate(text, shape_input, env)
       prompt = (" [" .. partial_code .. "]"):gsub("rj", "'")
     end
     local match = partial_code == "" or code == partial_code
+    return match, prompt, comment
+  elseif id == "snow_jiujian" then
+    if shape_input:sub(1, 1) ~= "q" then
+      return true, nil, nil
+    end
+    partial_code = shape_input:sub(2)
+    local elements = {}
+    for _, code in utf8.codes(text) do
+      table.insert(elements, env.radicals_gf0012[utf8.char(code)] or "")
+    end
+    local codes = {}
+    element = table.concat(elements)
+    jiujian_encode(element, env.radical_jiujian, codes)
+    code = #elements == 1 and codes[0] or codes[1]
+    prompt = " 部首 [" .. partial_code .. "]"
+    comment = code .. " " .. element
+    local match = not code or code:sub(1, #partial_code) == partial_code
     return match, prompt, comment
   else
     return true, nil, nil
