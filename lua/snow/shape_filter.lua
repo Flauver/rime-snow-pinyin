@@ -68,7 +68,7 @@ local function jiujian_encode(element, map, result)
   local word_code = ""
   for i, c in utf8.codes(element) do
     local character = utf8.char(c)
-    local value = map[character] or ""
+    local value = map[character]
     if value then
       if i == 1 then
         char_code = value
@@ -196,6 +196,8 @@ function filter.handle_candidate(text, shape_input, env)
     local element = table.concat(elements)
     jiujian_encode(element, env.shape_mapping, codes)
     local code = #elements == 1 and codes[0] or codes[1]
+    code = encode(code, { ["w"] = "2", ["e"] = "3", ["a"] = "4", ["d"] = "5", ["z"] = "7", ["x"] = "8", ["c"] = "9" })
+    partial_code = encode(partial_code, { ["w"] = "2", ["e"] = "3", ["a"] = "4", ["d"] = "5", ["z"] = "7", ["x"] = "8", ["c"] = "9" })
     local prompt = " 部首 [" .. partial_code .. "]"
     local comment = code .. " " .. element
     local match = not code or code:sub(1, #partial_code) == partial_code
