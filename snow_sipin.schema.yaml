@@ -69,8 +69,9 @@ sipin_algebra:
   - derive/san1/he3/ # 三
   - derive/wu3/gu2/ # 五
   - derive/ri4/ri1/ # 日
-  - derive/dou1/p/ # 都
+  
   - derive/lai2/c/ # 来
+  - derive/dou1/p/ # 都
   # 还原
   - xform/(^| )(h?)([mn]g?\d)/$1$2e$3/
   - xform/(^| )wu?/$1u/
