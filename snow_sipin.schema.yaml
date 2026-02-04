@@ -106,8 +106,8 @@ speller:
   delimiter: " "
   shape:
     - match: "[bpmfdtnlgkhjqxzcsrywv][aeiou]{0,3}"
-      accept: "1"
-    - match_shape: "1"
+      accept: '\.'
+    - match_shape: '\.'
       accept: "[a-z]"
     - match: "[bpmfdtnlgkhjqxzcsrywv][aeiou]{3}"
       accept: "[aeiou]"
