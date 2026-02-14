@@ -26,6 +26,7 @@ engine:
     - key_binder
     - lua_processor@*snow.abbreviation
     - lua_processor@*snow.select_character
+    - lua_processor@*snow.popping
     - speller
     - punctuator
     - selector
@@ -74,7 +75,7 @@ speller:
   alphabet: weasdzxc
   delimiter: " "
   shape:
-    - match: ".*"
+    - match: ".+"
       accept: "q"
     - match_shape: "q.*"
       accept: "[weasdzxc]"
@@ -125,6 +126,6 @@ patch:
     - { when: has_menu, accept: 6, send_sequence: "{Shift+Right}{Shift+Right}{Shift+Right}{Shift+Right}" }
     - { when: has_menu, accept: 7, send_sequence: "{End}" }
     - { when: always, accept: "Control+j", toggle: buffered }
-    #- { when: always, accept: e, toggle: buffered }
-    - { when: composing, accept: e, send: e }
+    - { when: always, accept: q, toggle: buffered }
+    - { when: composing, accept: q, send: q }
   menu/alternative_select_keys: "_23890"
