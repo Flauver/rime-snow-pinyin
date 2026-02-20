@@ -149,6 +149,7 @@ patch:
   translator/t3_pattern: "[bpmfdtnlgkhjqxzcsrywe]{3}"
   translator/jianpin_pattern: "[bpmfdtnlgkhjqxzcsrywe]{3,}"
   translator/enable_schema_user_dict: true
+  translator/disable_postpone_pattern: '.{3,}'
   translator/shape_elements: snow_jiandao_chaifen
   translator/shape_mapping: "radical_jiandao.txt"
   key_binder/bindings/+:
