@@ -27,7 +27,7 @@ function this.tags_match(segment, env)
 end
 
 ---@param known_candidates table<string, number>
-function format_known_candidates(known_candidates)
+local function format_known_candidates(known_candidates)
   local parts = {}
   for k, v in pairs(known_candidates) do
     table.insert(parts, string.format("%s:%d", k, v))
@@ -36,7 +36,7 @@ function format_known_candidates(known_candidates)
 end
 
 ---@param list Candidate[]
-function format_candidate_list(list)
+local function format_candidate_list(list)
   local result = {}
   for _, cand in ipairs(list) do
     table.insert(result, cand.text)
