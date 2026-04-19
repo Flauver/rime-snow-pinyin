@@ -20,11 +20,7 @@ engine:
   processors:
     - ascii_composer
     - recognizer
-<<<<<<< HEAD
-    - lua_processor@*snow.user_dict
-=======
     - lua_processor@*lutai.fixed_user*processor
->>>>>>> 8a3afb4 (改辅助码触发键为.；调整一简；增加 fixed_user.lua)
     - lua_processor@*snow.shape_processor
     - key_binder
     - lua_processor@*snow.abbreviation
