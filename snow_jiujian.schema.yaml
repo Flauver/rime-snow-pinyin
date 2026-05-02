@@ -21,7 +21,7 @@ engine:
   processors:
     - ascii_composer
     - recognizer
-    - lua_processor@*snow.user_dict
+    - lua_processor@*lutai.fixed_user*processor
     - lua_processor@*snow.shape_processor
     - key_binder
     - lua_processor@*snow.abbreviation
@@ -56,8 +56,19 @@ engine:
     #- lua_filter@*snow.postpone
     - uniquifier
     - lua_filter@*snow.shape_filter
+    - lua_filter@*lutai.fixed_user*filter
     - simplifier
     - lua_filter@*snow.special
+    
+fixed_user:
+  trigger_key: '3'
+  up_key: q
+  down_key: w
+  fix_key: a
+  reset_key: s
+  select_keys: qweasdzxc
+  sep_mode: true
+  
 
 jiujian_algebra:
   - xform/[abc]/W/
