@@ -96,6 +96,14 @@ function this.func(key_event, env)
   if shape_input then
     input = input .. shape_input
   end
+  -- 确认当前是 abc
+  local segment = context.composition:toSegmentation():back()
+  if not segment then
+    return snow.kNoop
+  end
+  if not segment:has_tag("abc") then
+    return snow.kNoop
+  end
   -- Rime 有一个 bug，在按句号键之后的那个字词的编码的会有一个隐藏的 "."
   -- 这导致顶功判断失败，所以先屏蔽了。但是这个对用 "." 作为编码的方案会有影响
   if input == "." then

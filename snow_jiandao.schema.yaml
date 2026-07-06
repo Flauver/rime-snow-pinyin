@@ -21,12 +21,12 @@ schema:
 engine:
   processors:
     - ascii_composer
+    - lua_processor@*snow.popping
     - recognizer
     - lua_processor@*snow.user_dict
     - lua_processor@*snow.shape_processor
     - key_binder
     - lua_processor@*snow.select_character
-    - lua_processor@*snow.popping
     - speller
     - punctuator
     - selector
@@ -38,13 +38,13 @@ engine:
     - abc_segmentor
     - affix_segmentor@stroke
     - affix_segmentor@pinyin
+    - affix_segmentor@jianpin
     - punct_segmentor
     - fallback_segmentor
   translators:
     - punct_translator
-    - lua_translator@*snow.table_like*t12
-    - lua_translator@*snow.table_like*jianpin
-    - lua_translator@*snow.table_like*lianxiang
+    - script_translator
+    - script_translator@jianpin
     - table_translator@stroke
     - script_translator@pinyin
     - lua_translator@*snow.datetime
@@ -88,24 +88,6 @@ speller:
       match: "[bpmfdtnlgkhjqxzcsrywe][a-z]{3,}"
       accept: "[BPMFDTNLGKHJQXZCSRYWE]"
       strategy: append
-    # 三顶模式
-    # 630
-    - when: popping1
-      match: "[bpmfdtnlgkhjqxzcsrywe][viuoa]+"
-      accept: "[bpmfdtnlgkhjqxzcsrywe]"
-    # 单字
-    - when: popping1
-      match: "[bpmfdtnlgkhjqxzcsrywe]{2}[viuoa]+"
-      accept: "[bpmfdtnlgkhjqxzcsrywe]"
-    # 多字词
-    - when: popping1
-      match: "[bpmfdtnlgkhjqxzcsrywe]{3,}[viuoa]*"
-      accept: "[bpmfdtnlgkhjqxzcsrywe]"
-    # 大写参与编码
-    - when: popping1
-      match: "[bpmfdtnlgkhjqxzcsrywe][a-z]{2,}"
-      accept: "[BPMFDTNLGKHJQXZCSRYWE]"
-      strategy: append
     # 顶标点
     - match: ".*[^a-z0-9]"
       accept: "[bpmfdtnlgkhjqxzcsrywe]"
@@ -117,6 +99,16 @@ speller:
     __append:
       - abbrev/^([a-z]).+$/$1/ # 简拼
       - xform/[viuoa]$// # 无声调
+
+jianpin:
+  tag: jianpin
+  dictionary: snow_pinyin
+  prism: snow_jiandao_jianpin
+  packs:
+    - snow_pinyin.base
+    - snow_pinyin.ext
+    - snow_pinyin.tencent
+    - snow_pinyin.user
 
 lookup_sanpin:
   tags: [pinyin]
@@ -133,8 +125,8 @@ __patch:
 
 patch:
   switches/+:
-    - options: [fluid, popping, popping1]
-      states: [整句, 四顶, 三顶]
+    - name: popping
+      states: [整句, 顶功]
       reset: 1
     - name: chaifen
       states: [默认, 拆分]
@@ -144,10 +136,6 @@ patch:
       reset: 0
   translator/prism: snow_jiandao
   translator/preedit_format: null
-  translator/t1_pattern: "[bpmfdtnlgkhjqxzcsrywe][a-z]?"
-  translator/t2_pattern: "[bpmfdtnlgkhjqxzcsrywe]{4}"
-  translator/t3_pattern: "[bpmfdtnlgkhjqxzcsrywe]{3}"
-  translator/jianpin_pattern: "[bpmfdtnlgkhjqxzcsrywe]{3,}"
   translator/enable_schema_user_dict: true
   translator/shape_elements: snow_jiandao_chaifen
   translator/shape_mapping: "radical_jiandao.txt"
@@ -157,3 +145,4 @@ patch:
     - { when: always, accept: v, toggle: buffered }
     - { when: composing, accept: v, send: v }
   menu/alternative_select_keys: null
+  recognizer/patterns/jianpin: "[bpmfdtnlgkhjqxzcsrywe]{3,}"
