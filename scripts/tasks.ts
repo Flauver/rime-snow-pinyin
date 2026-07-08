@@ -1,27 +1,23 @@
 import { copyFileSync, readdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
+import { Glob } from "bun";
 
-const FILELIST = [
-  "snow_pinyin.schema.yaml",
-  "snow_pinyin.dict.yaml",
-  "snow_pinyin.base.dict.yaml",
-  "snow_pinyin.ext.dict.yaml",
-  "snow_pinyin.tencent.dict.yaml",
-  "snow_sipin.schema.yaml",
-  "snow_sipin.fixed.txt",
-  "snow_sanpin.schema.yaml",
-  "snow_sanpin.fixed.txt",
-  "snow_yipin.schema.yaml",
-  "snow_yipin.fixed.txt",
-  "snow_jiandao.schema.yaml",
-  "snow_jiandao.fixed.txt",
-  "snow_jiandao_jianpin.schema.yaml",
-  "snow_stroke.schema.yaml",
+// 使用 glob 模式匹配文件，支持星号通配符
+// * 匹配任意字符（不跨路径分隔符），** 匹配任意字符（可跨路径分隔符）
+const FILE_PATTERNS = [
+  "snow_*.schema.yaml",
+  "snow_*.dict.yaml",
+  "snow_*.fixed.txt",
 ];
 
+function resolveFiles(): string[] {
+  const glob = new Glob(`{${FILE_PATTERNS.join(",")}}`);
+  return [...glob.scanSync(".")].sort();
+}
+
 function deploy(path: string) {
-  for (const file of FILELIST) {
+  for (const file of resolveFiles()) {
     copyFileSync(`./${file}`, `${path}/${file}`);
   }
   for (const file of readdirSync("./lua/snow/")) {
@@ -30,7 +26,7 @@ function deploy(path: string) {
 }
 
 function retrieve(path: string) {
-  for (const file of FILELIST) {
+  for (const file of resolveFiles()) {
     copyFileSync(`${path}/${file}`, `./${file}`);
   }
   for (const file of readdirSync(`${path}/lua/snow/`)) {
@@ -38,8 +34,16 @@ function retrieve(path: string) {
   }
 }
 
-let [command, path] = process.argv.slice(2);
-path = path || join(homedir(), "Library", "Rime");
+let [command, type] = process.argv.slice(2);
+type = type || "fcitx";
+let path: string;
+if (type === "squirrel") {
+  path = join(homedir(), "Library", "Rime");
+} else if (type === "fcitx") {
+  path = join(homedir(), ".local", "share", "fcitx5", "rime");
+} else {
+  throw new Error(`Unknown type: ${type}`);
+}
 
 if (command === "deploy") {
   deploy(path);

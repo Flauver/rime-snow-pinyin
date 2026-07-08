@@ -9,7 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["bun-types"]
   },
   "include": ["./**/*"],
   "exclude": ["node_modules", "**/node_modules/*"]
