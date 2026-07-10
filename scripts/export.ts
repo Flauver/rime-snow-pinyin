@@ -17,16 +17,16 @@ function 获取固顶词(file: string) {
 }
 
 function 获取拼音词典() {
-  const singleRaw = readFileSync("snow_pinyin.dict.yaml", "utf8")
+  const singleRaw = readFileSync("../snow_pinyin.dict.yaml", "utf8")
     .trim()
     .split("\n");
-  const base = readFileSync("snow_pinyin.base.dict.yaml", "utf8")
+  const base = readFileSync("../snow_pinyin.base.dict.yaml", "utf8")
     .trim()
     .split("\n");
-  const ext = readFileSync("snow_pinyin.ext.dict.yaml", "utf8")
+  const ext = readFileSync("../snow_pinyin.ext.dict.yaml", "utf8")
     .trim()
     .split("\n");
-  const tencent = readFileSync("snow_pinyin.tencent.dict.yaml", "utf8")
+  const tencent = readFileSync("../snow_pinyin.tencent.dict.yaml", "utf8")
     .trim()
     .split("\n");
   const wordTotalWeight = new Map<string, number>();
@@ -63,7 +63,7 @@ function 获取拼音词典() {
  * 得到全码
  */
 function assemble(syllables: string[], algebra: SpellingAlgebra) {
-  const transformed = syllables.map(algebra.apply);
+  const transformed = syllables.map(x => algebra.apply(x));
   if (transformed.length === 1) return transformed[0];
   let base = transformed
     .map((x, i) => (useCapital && i >= 4 ? x[0].toUpperCase() : x[0]))
@@ -74,10 +74,10 @@ function assemble(syllables: string[], algebra: SpellingAlgebra) {
 }
 
 function simulate() {
-  const fixedMenu = 获取固顶词("snow_sipin.fixed.txt");
+  const fixedMenu = 获取固顶词("../snow_sipin.fixed.txt");
   const mainMenu = new Map<string, string>();
   const codes = 获取拼音词典();
-  const rules = new SpellingAlgebra("snow_sipin.schema.yaml", "sipin_algebra");
+  const rules = new SpellingAlgebra("../snow_sipin.schema.yaml", "sipin_algebra");
   const finalize = (s: string) =>
     /^[bpmfdtnlgkhjqxzcsrwyv]{1,3}$/.test(s) ? s + "_" : s;
   const encoded: { word: string; code: string; importance: number }[] = [];
@@ -127,8 +127,8 @@ function simulate() {
   return deduped;
 }
 
-const maxSingle = 8773;
-const maxMultiple = 60000;
+const maxSingle = Infinity;
+const maxMultiple = Infinity;
 const useCapital = true;
 const encoded = simulate();
 

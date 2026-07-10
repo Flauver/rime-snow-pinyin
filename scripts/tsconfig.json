@@ -3,14 +3,15 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "target": "ESNext",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["bun-types"]
   },
-  "include": ["scripts/**/*", "types/**/*"],
+  "include": ["./**/*"],
   "exclude": ["node_modules", "**/node_modules/*"]
 }

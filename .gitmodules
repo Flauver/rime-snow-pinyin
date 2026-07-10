@@ -7,3 +7,6 @@
 [submodule "rime-stroke"]
 	path = rime-stroke
 	url = https://github.com/rime/rime-stroke
+[submodule "rime-easy-en"]
+	path = rime-easy-en
+	url = https://github.com/BlindingDark/rime-easy-en

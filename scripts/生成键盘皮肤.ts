@@ -1,6 +1,6 @@
 import { dump } from "js-yaml";
-import { cpSync, mkdirSync, writeFileSync } from "fs";
-import { join, parse } from "path";
+import { mkdirSync, writeFileSync } from "fs";
+import { join } from "path";
 import { homedir } from "os";
 
 type Style = Record<string, any>;
@@ -638,6 +638,8 @@ function makeCandidates(config: Config): [any, Collection] {
     { name: "固定", action: { sendKeys: "Control+semicolon" } },
     { name: "前移", action: { sendKeys: "Control+bracketleft" } },
     { name: "后移", action: { sendKeys: "Control+bracketright" } },
+    { name: "加词", action: { sendKeys: "Control+apostrophe" } },
+    { name: "重置", action: { sendKeys: "Control+backslash" } },
   ];
   const values = {
     horizontalCandidatesStyle,
